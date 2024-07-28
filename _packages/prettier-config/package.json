@@ -1,0 +1,6 @@
+{
+	"name": "@typevps/prettier-config",
+	"version": "0.0.1",
+	"main": ".prettierrc.js",
+	"private": true
+}

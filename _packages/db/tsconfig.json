@@ -1,0 +1,6 @@
+{
+    "extends": "@typevps/tsconfig/node.json",
+    "include": [
+        "src"
+    ]
+}

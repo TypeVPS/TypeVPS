@@ -1,0 +1,23 @@
+{
+    "name": "@typevps/imgmaker",
+    "version": "1.0.0",
+    "description": "Proxmox vnc websocket proxy",
+    "scripts": {
+        "startt": "ts-node-dev -r tsconfig-paths/register src/main.ts"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "@types/express": "^4.17.17",
+        "@types/node": "^20.4.1",
+        "@types/ws": "^8.5.5",
+        "axios": "^1.4.0",
+        "express": "^4.18.2",
+        "form-data": "^4.0.0",
+        "ts-node": "^10.9.1",
+        "typescript": "^5.1.6",
+        "url": "^0.11.1",
+        "ws": "^8.13.0",
+        "zod": "^3.21.4"
+    }
+}

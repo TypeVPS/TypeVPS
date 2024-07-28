@@ -1,0 +1,10 @@
+{
+    "extends": "@typevps/tsconfig/node.json",
+    "include": [
+        "src"
+    ],
+    // add support for tsx
+    "compilerOptions": {
+        "jsx": "react"
+    }
+}

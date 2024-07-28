@@ -1,0 +1,8 @@
+// set schema to eslintrc
+{
+    "$schema": "http://json.schemastore.org/eslintrc",
+    "extends": [
+        "@typevps/eslint-config"
+        // basic config
+    ]
+}

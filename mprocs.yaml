@@ -1,0 +1,30 @@
+procs:
+  statemachine:
+    shell: "yarn dev"
+    cwd: _apps/statemachine
+
+  backend:
+    shell: "yarn dev"
+    cwd: _apps/api
+    
+  frontend:
+    shell: "yarn dev"
+    cwd: _apps/web
+
+  db migrator:
+    shell: "yarn prisma migrate dev"
+    cwd: _packages/db
+    autostart: false
+
+keymap_procs:
+  reset: true
+  <C-q>: { c: toggle-focus }
+  <C-c>: {c: force-quit}
+  <C-s>: {c: start-proc}
+  <C-r>: {c: restart-proc}
+
+keymap_term: 
+  reset: true
+  <C-q>: { c: toggle-focus }
+  <esc>: { c: toggle-focus }
+  <C-r>: {c: restart-proc}

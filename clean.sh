@@ -1,0 +1,1 @@
+find _apps _packages -type d -name "dist" -exec rm -r {} +

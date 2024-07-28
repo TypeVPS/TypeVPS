@@ -1,0 +1,292 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["orderByNulls"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PaymentProviderType {
+  STRIPE
+  COINBASE_COMMERCE
+  BITPAY_SERVER
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+model User {
+  id                    Int                    @id @default(autoincrement())
+  email                 String                 @unique
+  fullName              String
+  password              String
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  roles                 UserRole[]             @default([USER])
+  UserVirtualMachines   UserVirtualMachine[]
+  SSHKeys               SshKey[]
+  RefreshTokens         RefreshToken[]
+  Payments              Payment[]
+  Subscriptions         Subscription[]
+  PasswordResetTokens   PasswordResetToken[]
+  UserPaidService       UserPaidService[]
+  DineroUserAccountLink DineroUserAccountLink?
+}
+
+model PasswordResetToken {
+  token     String    @id @default(cuid())
+  userId    Int
+  User      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  usedAt    DateTime?
+  expiresAt DateTime
+}
+
+model RefreshToken {
+  userId    Int
+  User      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @id
+  createdAt DateTime  @default(now())
+  createdIp String
+  expiredAt DateTime?
+
+  @@index([userId])
+}
+
+model SshKey {
+  id     String @id @default(cuid())
+  userId Int
+  User   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key    String
+  name   String
+
+  @@index([userId])
+  @@map("SSHKey")
+}
+
+enum ProductType {
+  VPS
+  GAME_SERVER
+}
+
+model Product {
+  id                               String      @id @default(cuid())
+  type                             ProductType
+  name                             String
+  networkBandwidthBytes            BigInt
+  networkBandwidthDedicatedMegabit Int
+  networkBandwidthBurstMegabit     Int
+  description                      String
+
+  sortOrder Int     @default(9999)
+  featured  Boolean @default(false)
+
+  diskBytes BigInt
+  ramBytes  BigInt
+  cpuCores  Int
+
+  monthlyPrice Float
+
+  disabledAt         DateTime?
+  hiddenAt           DateTime?
+  isUserSpecialOffer Boolean   @default(false)
+  maxInstances       Int?
+  createdAt          DateTime  @default(now())
+}
+
+enum ActiveProductPaymentStatus {
+  ACTIVE
+  EXPIRED
+  WAITING_FOR_INITIAL_PAYMENT
+}
+
+enum ProxmoxInstallStatus {
+  AWAITING_CONFIG
+  INSTALLING
+  ERROR
+  OK
+}
+
+enum IpAddressKind {
+  IPV4
+  IPV6
+}
+
+model IpAddress {
+  id      String @id @default(cuid())
+  address String @unique
+  subnet  String
+  gateway String
+
+  macAddress String @default("00:00:00:00:00:00")
+
+  kind IpAddressKind
+
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @default(now()) @updatedAt
+  AssignedIpAddress AssignedIpAddress?
+}
+
+model AssignedIpAddress {
+  id String @id @default(cuid())
+
+  ipAddressId String    @unique
+  IpAddress   IpAddress @relation(fields: [ipAddressId], references: [id], onDelete: Cascade)
+
+  userVirtualMachineId String
+  UserVirtualMachine   UserVirtualMachine @relation(fields: [userVirtualMachineId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model UserVirtualMachine {
+  id                               String      @id @default(cuid())
+  type                             ProductType
+  name                             String
+  networkBandwidthBytes            BigInt
+  networkBandwidthDedicatedMegabit Int
+  networkBandwidthBurstMegabit     Int
+  description                      String
+
+  diskBytes BigInt
+  ramBytes  BigInt
+  cpuCores  Int
+
+  lastAccessedAt DateTime?
+
+  monthlyPrice Float
+
+  userId Int
+  User   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // this includes setting
+  firstPaymentConfirmed Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  installStatus     ProxmoxInstallStatus @default(AWAITING_CONFIG)
+  installError      String?
+  AssignedIpAddress AssignedIpAddress[]
+
+  // This is mostly for UI purposes
+  primaryIpv4Address String?
+  primaryIpv6Address String?
+
+  UserPaidService   UserPaidService @relation(fields: [userPaidServiceId], references: [id])
+  userPaidServiceId String
+
+  vmUsername String?
+  vmPassword String?
+}
+
+enum PaymentStatus {
+  PENDING
+  PENDING_EXPIRED
+  COMPLETED
+  CANCELLED
+  FAILED
+}
+
+model Payment {
+  id                String              @id @default(cuid())
+  paymentProvider   PaymentProviderType
+  paymentProviderId String?             @unique
+
+  price     Float
+  createdAt DateTime @default(now())
+  userId    Int
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status            PaymentStatus    @default(PENDING)
+  UserPaidService   UserPaidService? @relation(fields: [userPaidServiceId], references: [id])
+  userPaidServiceId String?
+}
+
+enum SubscriptionStatus {
+  PENDING
+  PENDING_EXPIRED
+  ACTIVE
+  ACTIVE_TRAILING
+  CANCELLED
+}
+
+model Subscription {
+  id                            String              @id @default(cuid())
+  paymentProvider               PaymentProviderType
+  paymentProviderId             String?             @unique
+  paymentProviderSubscriptionId String?             @unique
+
+  createdAt DateTime @default(now())
+  userId    Int
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status SubscriptionStatus @default(PENDING)
+  price  Float
+
+  cancelledAt DateTime?
+  expiresAt   DateTime?
+
+  UserPaidService   UserPaidService @relation(fields: [userPaidServiceId], references: [id])
+  userPaidServiceId String
+}
+
+enum InstallTemplateOsType {
+  WINDOWS
+  LINUX
+}
+
+model InstallTemplate {
+  id         String                @id @default(cuid())
+  osType     InstallTemplateOsType @default(LINUX)
+  name       String
+  disabledAt DateTime?
+  qcow2Url   String                @default("")
+
+  minimumDiskBytes BigInt @default(0)
+  minimumRamBytes  BigInt @default(0)
+  minimumCpuCores  Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model UserPaidService {
+  id String @id @default(cuid())
+
+  expiresAt DateTime?
+  userId    Int
+  User      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  firstPaymentConfirmed Boolean @default(false)
+  autoRenews            Boolean @default(false)
+
+  UserVirtualMachine UserVirtualMachine[]
+  Payment            Payment[]
+  Subscription       Subscription[]
+
+  @@map("Service")
+}
+
+model DineroApi {
+  id           String   @id @default(cuid())
+  accessToken  String
+  refreshToken String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+}
+
+model DineroUserAccountLink {
+  id     String @id @default(cuid())
+  userId Int    @unique
+  User   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  dineroUserGuid String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+}

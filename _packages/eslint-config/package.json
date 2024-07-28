@@ -1,0 +1,10 @@
+{
+	"name": "@typevps/eslint-config",
+	"version": "0.0.1",
+	"main": ".eslintrc.js",
+	"private": true,
+	"dependencies": {
+		"eslint-import-resolver-typescript": "^3.5.5",
+		"eslint-plugin-import": "^2.27.5"
+	}
+}
